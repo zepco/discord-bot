@@ -1,0 +1,1 @@
+Własne próby stworzenia komend bota z wykorzystaniem biblioteki discord.js
