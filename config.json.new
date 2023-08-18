@@ -1,5 +1,6 @@
 {
 	"clientId": "123456789012345678",
 	"guildId": "876543210987654321",
-	"token": "your-token-goes-here"
+	"token": "your-token-goes-here",
+	"openWeatherMapKey: "your-weather-key",
 }
