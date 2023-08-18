@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { openWeatherMapKey } = require("../../config.json");
 const axios = require("axios");
 
@@ -27,8 +27,26 @@ module.exports = {
 
     // console.log(res);
 
+    const weatherEmbed = new EmbedBuilder()
+    .setColor(0x00ffff)
+    .setTitle('Pogoda')
+    .setDescription(`Pogoda dla miasta ${cityName}`)
+    .setThumbnail(`https://openweathermap.org/img/wn/${res.weather[0].icon}@2x.png`)
+    .addFields(
+      { name: 'Informacje ogólne', value: res.weather[0].description },
+      { name: '\u200B', value: '\u200B' },
+      { name: 'Temperatura', value: res.main.temp + ' \u00B0C', inline: true },
+      { name: 'Temp. odczuwalna', value: res.main.feels_like + ' \u00B0C', inline: true },
+      { name: 'Ciśnienie', value: res.main.pressure + ' hPa', inline: true },
+      { name: 'Wilgotność', value: res.main.humidity + '%', inline: true },
+      { name: 'Zachmurzenie', value: res.clouds.all + '%', inline: true},
+      { name: 'Prędk. wiatru', value: res.wind.speed + ' km/h', inline: true},
+    )
+    .setFooter({text: 'Pogoda w oparciu o OpenWeatherMap'})
+    .setTimestamp();
+  
     return interaction.reply(
-      `Informacje o pogodzie: ${res.weather[0].description}, temperatura: ${res.main.temp}, odczuwalna ${res.main.feels_like}, ciśnienie ${res.main.pressure} hPa, wilgotność ${res.main.humidity}`
+      { embeds: [weatherEmbed] }
     );
   },
 };
