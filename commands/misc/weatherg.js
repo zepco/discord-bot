@@ -1,10 +1,14 @@
-const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+// const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { SlashCommandBuilder, EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const { openWeatherMapKey } = require("../../config.json");
 const axios = require("axios");
-
+const path = require('node:path');
+const nunjucks = require('nunjucks');
+const nodeHtmlToImage = require('node-html-to-image')
+  
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("pogoda")
+    .setName("pogoda_graf")
     .setDescription("Pokazuje pogodę dla danego miasta.")
     .addStringOption((option) =>
       option.setName("miasto").setDescription("Nazwa miasta").setRequired(true)
@@ -13,6 +17,12 @@ module.exports = {
     const cityName = interaction.options.getString("miasto");
 
     const weatherEmbed = new EmbedBuilder()
+
+    let imgAttachment;
+    let image;
+    const foldersPath = path.join(__dirname, '../../templates');
+
+    interaction.deferReply();
 
     await axios
       .get("http://api.openweathermap.org/data/2.5/weather", {  // adres zapytania do serwera pogody
@@ -23,8 +33,33 @@ module.exports = {
           units: "metric",            // jednostki metryczne
         },
       })
-      .then((res) => {  // jeśli wszystko przebiegło pomyślnie
-        console.log(res);
+      .then(async (res) => {  // jeśli wszystko przebiegło pomyślnie
+        // console.log(res.data);
+
+
+        nunjucks.configure(foldersPath, {autoescape: true, noCache: true});
+        const html = nunjucks.render('misc/weatherg.html', {data: res.data});
+        
+        image = await nodeHtmlToImage({
+          html: html,
+          quality: 100,
+          type: 'png',
+          puppeteerArgs: {
+            args: ['--no-sandbox'],
+          },
+          encoding: 'buffer',
+          transparent: true,
+        });
+
+// console.log(Buffer.from(image));
+
+        imgAttachment = new AttachmentBuilder()
+          .from(image)
+          .setName('pogoda.png')
+          .setDescription('Pogoda');
+
+// console.log(imgAttachment);
+
         res = res.data;
         weatherEmbed
           .setColor(0x00ffff)
@@ -39,8 +74,9 @@ module.exports = {
             { name: 'Ciśnienie', value: res.main.pressure + ' hPa', inline: true },
             { name: 'Wilgotność', value: res.main.humidity + '%', inline: true },
             { name: 'Zachmurzenie', value: res.clouds.all + '%', inline: true},
-            { name: 'Prędk. wiatru', value: res.wind.speed + ' m/s', inline: true},
+            { name: 'Prędk. wiatru', value: res.wind.speed + ' km/h', inline: true},
           )
+          .setImage('attachment://pogoda.png')
           .setFooter({text: 'Pogoda w oparciu o OpenWeatherMap'})
           .setTimestamp();
       })
@@ -53,10 +89,9 @@ module.exports = {
         }
       });
 
-    // console.log(res);
-  
-    return interaction.reply(
-      { embeds: [weatherEmbed] }
+    return interaction.editReply(
+      // { embeds: [weatherEmbed] }
+      { embeds: [weatherEmbed], files: [{attachment: imgAttachment}] } 
     );
   },
 };
