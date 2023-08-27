@@ -24,7 +24,7 @@ module.exports = {
         },
       })
       .then((res) => {  // jeśli wszystko przebiegło pomyślnie
-        console.log(res);
+        // console.log(res);
         res = res.data;
         weatherEmbed
           .setColor(0x00ffff)
